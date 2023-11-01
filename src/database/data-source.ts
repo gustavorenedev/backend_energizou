@@ -7,6 +7,7 @@ import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { config } from "dotenv";
 import { CreateCompaniesTable1698845112348 } from "./migrations/1698845112348-CreateCompaniesTable";
+import Company from "../app/entities/Company";
 
 config();
 
@@ -19,7 +20,7 @@ export const AppDataSource = new DataSource({
   database: process.env.TYPEORM_DATABASE,
   synchronize: true,
   logging: false,
-  entities: [],
+  entities: [Company],
   migrations: [CreateCompaniesTable1698845112348],
   subscribers: [],
 });
