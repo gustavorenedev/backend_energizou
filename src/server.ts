@@ -7,13 +7,14 @@ import express from "express";
 import cors from "cors";
 import { startServer } from "./server/server-startup";
 import dotenv from "dotenv";
+import routers from "./app/routes/routes";
 
 dotenv.config();
 
 const app = express();
+const port = Number(process.env.LOCAL_PORT);
 app.use(cors());
 app.use(express.json());
-
-const port = Number(process.env.LOCAL_PORT);
+app.use(routers);
 
 startServer(app, port);
