@@ -6,14 +6,6 @@ import ICompany from "../interfaces/ICompany";
 const companyRepository = AppDataSource.getRepository(Company);
 
 /**
- * Obtém uma lista de empresas.
- * @returns Uma promessa (Promise) que resolve em uma lista de empresas (ICompany[]).
- */
-const getCompanies = (): Promise<ICompany[]> => {
-  return companyRepository.find();
-};
-
-/**
  * Cria uma nova empresa com os dados fornecidos e a salva.
  * @param companyData - Os dados da empresa a ser criada.
  * @returns Uma promessa (Promise) que resolve na empresa criada (ICompany).
@@ -21,6 +13,14 @@ const getCompanies = (): Promise<ICompany[]> => {
 const createCompany = (companyData: ICompany): Promise<ICompany> => {
   const newCompany = companyRepository.create(companyData);
   return companyRepository.save(newCompany);
+};
+
+/**
+ * Obtém uma lista de empresas.
+ * @returns Uma promessa (Promise) que resolve em uma lista de empresas (ICompany[]).
+ */
+const getCompanies = (): Promise<ICompany[]> => {
+  return companyRepository.find();
 };
 
 /**
@@ -32,6 +32,39 @@ const getCompanyByCnpj = async (
   company_cnpj: string
 ): Promise<ICompany | null> => {
   return companyRepository.findOne({ where: { company_cnpj } });
+};
+
+/**
+ * Atualiza as informações de uma empresa existente com base no seu ID.
+ * @param id - O ID da empresa a ser atualizada.
+ * @param updatedData - Os dados atualizados da empresa.
+ * @returns Uma Promise que resolve na empresa atualizada (ICompany) ou nulo se a empresa não existir.
+ */
+const updateCompany = async (
+  id: number,
+  updatedData: ICompany
+): Promise<ICompany | null> => {
+  const existingCompany = await getCompanyById(id);
+
+  if (!existingCompany) {
+    return null;
+  }
+
+  const updatedCompany = companyRepository.create({
+    ...existingCompany,
+    ...updatedData,
+  });
+
+  return companyRepository.save(updatedCompany);
+};
+
+/**
+ * Obtém uma empresa com base no seu ID único.
+ * @param id - O ID da empresa a ser recuperada.
+ * @returns Uma Promise que resolve na empresa encontrada (ICompany) ou nulo se não for encontrada.
+ */
+const getCompanyById = async (id: number): Promise<ICompany | null> => {
+  return companyRepository.findOne({ where: { id: id } });
 };
 
 /**
@@ -49,4 +82,6 @@ export default {
   createCompany,
   getCompanyByCnpj,
   deleteCompany,
+  updateCompany,
+  getCompanyById,
 };
