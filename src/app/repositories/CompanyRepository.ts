@@ -34,8 +34,19 @@ const getCompanyByCnpj = async (
   return companyRepository.findOne({ where: { company_cnpj } });
 };
 
+/**
+ * Exclui uma empresa com base no seu ID.
+ * @param companyId - O ID da empresa a ser excluída.
+ * @returns Uma promessa (Promise) que resolve em true se a exclusão foi bem-sucedida, caso contrário, false.
+ */
+const deleteCompany = async (companyId: number): Promise<boolean> => {
+  const result = await companyRepository.delete(companyId);
+  return result.affected === 1;
+};
+
 export default {
   getCompanies,
   createCompany,
   getCompanyByCnpj,
+  deleteCompany,
 };
