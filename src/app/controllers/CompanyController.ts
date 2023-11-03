@@ -92,6 +92,71 @@ companyRouter.post(
   }
 );
 
+companyRouter.put(
+  "/:id",
+  async (req: Request, res: Response): Promise<Response> => {
+    try {
+      // Obtém o ID da empresa a ser atualizada a partir dos parâmetros da requisição
+      const companyId = parseInt(req.params.id, 10);
+      // Obtém os dados atualizados da empresa a partir do corpo da requisição
+      const updatedData = req.body;
+
+      // Obtém a empresa existente com base no ID
+      const existingCompany = await CompanyRepository.getCompanyById(companyId);
+
+      // Verifica se a empresa com o ID especificado existe
+      if (!existingCompany) {
+        return res.status(404).json({ message: "Empresa não encontrada" });
+      }
+
+      // Realiza as mesmas validações que você fez no método POST, se necessário
+      if (!isCEP(updatedData.cep_empresa)) {
+        return res
+          .status(400)
+          .json({ error: "CEP inválido, EX de input: XXXXX-XXX" });
+      }
+
+      if (!isEndereco(updatedData.endereco_empresa)) {
+        return res.status(400).json({ error: "Endereço inválido" });
+      }
+
+      if (!isNumero(updatedData.numero_empresa)) {
+        return res.status(400).json({ error: "Número inválido" });
+      }
+
+      if (!isTelefone(updatedData.telefone_empresa)) {
+        return res
+          .status(400)
+          .json({ error: "Telefone inválido, EX de input: +XX(XX)XXXXX-XXXX" });
+      }
+
+      if (!isEmail(updatedData.email_empresa)) {
+        return res
+          .status(400)
+          .json({ error: "E-mail inválido, EX de input: xxxxxx@xxxx.com" });
+      }
+
+      // Atualiza a empresa com os dados fornecidos
+      const updatedCompany = await CompanyRepository.updateCompany(
+        companyId,
+        updatedData
+      );
+
+      // Verifica se a atualização foi bem-sucedida
+      if (updatedCompany) {
+        return res.status(200).json(updatedCompany);
+      } else {
+        return res
+          .status(500)
+          .json({ message: "Falha ao atualizar a empresa" });
+      }
+    } catch (error) {
+      // Retorna um erro 500 em caso de erro interno no servidor
+      return res.status(500).json(error);
+    }
+  }
+);
+
 companyRouter.delete(
   "/:id",
   async (req: Request, res: Response): Promise<Response> => {
