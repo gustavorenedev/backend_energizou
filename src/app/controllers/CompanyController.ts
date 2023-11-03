@@ -1,13 +1,12 @@
 import { Request, Response, Router } from "express";
 import CompanyRepository from "../repositories/CompanyRepository";
+import { validateCompanyData } from "../utils/validationUtilsFunction";
 import {
-  isCNPJ,
-  isCEP,
-  isEndereco,
-  isNumero,
-  isTelefone,
-  isEmail,
-} from "../utils/validationUtils";
+  sendCreatedResponse,
+  sendErrorResponse,
+  sendNoContentResponse,
+  sendSuccessResponse,
+} from "../utils/responseUtils";
 
 const companyRouter = Router();
 
@@ -18,10 +17,10 @@ companyRouter.get(
     try {
       // Obtém a lista de empresas do repositório
       const companies = await CompanyRepository.getCompanies();
-      return res.status(200).json(companies);
+      return sendSuccessResponse(res, companies);
     } catch (error) {
       // Retorna um erro 500 se houver algum problema na busca
-      return res.status(500).json(error);
+      return sendErrorResponse(res, 500, `Internal Server Error: ${error}`);
     }
   }
 );
@@ -32,6 +31,12 @@ companyRouter.post(
   async (req: Request, res: Response): Promise<Response> => {
     try {
       const companyData = req.body;
+      const validationErrors = validateCompanyData(companyData);
+
+      // Realiza validações dos dados da empresa
+      if (validationErrors.length > 0) {
+        return res.status(400).json({ errors: validationErrors });
+      }
 
       // Verifica se já existe uma empresa com o CNPJ fornecido
       const existingCompany = await CompanyRepository.getCompanyByCnpj(
@@ -40,54 +45,15 @@ companyRouter.post(
 
       if (existingCompany) {
         // Retorna um erro 400 se o CNPJ já estiver cadastrado
-        return res.status(400).json({ error: "CNPJ já cadastrado" });
-      }
-
-      // Realiza validações dos dados da empresa
-      if (!isCNPJ(companyData.company_cnpj)) {
-        // Retorna um erro 400 se o CNPJ fornecido for inválido
-        return res
-          .status(400)
-          .json({ error: "CNPJ inválido, EX de input: XX.XXX.XXX/XXXX-XX" });
-      }
-
-      if (!isCEP(companyData.company_zip_code)) {
-        // Retorna um erro 400 se o CEP fornecido for inválido
-        return res
-          .status(400)
-          .json({ error: "CEP inválido, EX de input: XXXXX-XXX" });
-      }
-
-      if (!isEndereco(companyData.company_address)) {
-        // Retorna um erro 400 se o endereço fornecido for inválido
-        return res.status(400).json({ error: "Endereço inválido" });
-      }
-
-      if (!isNumero(companyData.company_number)) {
-        // Retorna um erro 400 se o número fornecido for inválido
-        return res.status(400).json({ error: "Número inválido" });
-      }
-
-      if (!isTelefone(companyData.company_phone)) {
-        // Retorna um erro 400 se o telefone fornecido for inválido
-        return res
-          .status(400)
-          .json({ error: "Telefone inválido, EX de input: +XX(XX)XXXXX-XXXX" });
-      }
-
-      if (!isEmail(companyData.company_email)) {
-        // Retorna um erro 400 se o e-mail fornecido for inválido
-        return res
-          .status(400)
-          .json({ error: "E-mail inválido, EX de input: xxxxxx@xxxx.com" });
+        return sendErrorResponse(res, 400, "CNPJ já cadastrado");
       }
 
       // Cria uma nova empresa e a retorna em formato JSON
       const newCompany = await CompanyRepository.createCompany(companyData);
-      return res.status(201).json(newCompany);
+      return sendCreatedResponse(res, newCompany);
     } catch (error) {
       // Retorna um erro 500 se houver algum problema na criação da empresa
-      return res.status(500).json(error);
+      return sendErrorResponse(res, 500, `Internal Server Error: ${error}`);
     }
   }
 );
@@ -100,40 +66,19 @@ companyRouter.put(
       const companyId = parseInt(req.params.id, 10);
       // Obtém os dados atualizados da empresa a partir do corpo da requisição
       const updatedData = req.body;
+      const validationErrors = validateCompanyData(updatedData);
+
+      // Realiza as mesmas validações que você fez no método POST, se necessário
+      if (validationErrors.length > 0) {
+        return res.status(400).json({ errors: validationErrors });
+      }
 
       // Obtém a empresa existente com base no ID
       const existingCompany = await CompanyRepository.getCompanyById(companyId);
 
       // Verifica se a empresa com o ID especificado existe
       if (!existingCompany) {
-        return res.status(404).json({ message: "Empresa não encontrada" });
-      }
-
-      // Realiza as mesmas validações que você fez no método POST, se necessário
-      if (!isCEP(updatedData.cep_empresa)) {
-        return res
-          .status(400)
-          .json({ error: "CEP inválido, EX de input: XXXXX-XXX" });
-      }
-
-      if (!isEndereco(updatedData.endereco_empresa)) {
-        return res.status(400).json({ error: "Endereço inválido" });
-      }
-
-      if (!isNumero(updatedData.numero_empresa)) {
-        return res.status(400).json({ error: "Número inválido" });
-      }
-
-      if (!isTelefone(updatedData.telefone_empresa)) {
-        return res
-          .status(400)
-          .json({ error: "Telefone inválido, EX de input: +XX(XX)XXXXX-XXXX" });
-      }
-
-      if (!isEmail(updatedData.email_empresa)) {
-        return res
-          .status(400)
-          .json({ error: "E-mail inválido, EX de input: xxxxxx@xxxx.com" });
+        return sendErrorResponse(res, 404, "Empresa não encontrada");
       }
 
       // Atualiza a empresa com os dados fornecidos
@@ -146,13 +91,11 @@ companyRouter.put(
       if (updatedCompany) {
         return res.status(200).json(updatedCompany);
       } else {
-        return res
-          .status(500)
-          .json({ message: "Falha ao atualizar a empresa" });
+        return sendErrorResponse(res, 500, "Falha ao atualizar a empresa");
       }
     } catch (error) {
       // Retorna um erro 500 em caso de erro interno no servidor
-      return res.status(500).json(error);
+      return sendErrorResponse(res, 500, `Internal Server Error: ${error}`);
     }
   }
 );
@@ -169,14 +112,14 @@ companyRouter.delete(
 
       if (deleted) {
         // Retorna uma resposta de sucesso (código 204) se a empresa foi excluída com sucesso
-        return res.status(204).send();
+        return sendNoContentResponse(res);
       } else {
         // Retorna um erro 404 se a empresa não foi encontrada
-        return res.status(404).json({ message: "Empresa não encontrada" });
+        return sendErrorResponse(res, 404, "Empresa não encontrada");
       }
     } catch (error) {
       // Retorna um erro 500 em caso de erro interno no servidor
-      return res.status(500).json(error);
+      return sendErrorResponse(res, 500, `Internal Server Error: ${error}`);
     }
   }
 );
