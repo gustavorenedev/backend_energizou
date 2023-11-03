@@ -92,4 +92,28 @@ companyRouter.post(
   }
 );
 
+companyRouter.delete(
+  "/:id",
+  async (req: Request, res: Response): Promise<Response> => {
+    try {
+      // Obtém o ID da empresa a ser excluída a partir dos parâmetros da requisição
+      const companyId = parseInt(req.params.id, 10);
+
+      // Tenta excluir a empresa com base no ID fornecido
+      const deleted = await CompanyRepository.deleteCompany(companyId);
+
+      if (deleted) {
+        // Retorna uma resposta de sucesso (código 204) se a empresa foi excluída com sucesso
+        return res.status(204).send();
+      } else {
+        // Retorna um erro 404 se a empresa não foi encontrada
+        return res.status(404).json({ message: "Empresa não encontrada" });
+      }
+    } catch (error) {
+      // Retorna um erro 500 em caso de erro interno no servidor
+      return res.status(500).json(error);
+    }
+  }
+);
+
 export default companyRouter;
