@@ -7,6 +7,7 @@ import {
   sendNoContentResponse,
   sendSuccessResponse,
 } from "../utils/responseUtils";
+import { formatCnpj } from "../utils/validationUtils";
 
 const companyRouter = Router();
 
@@ -21,6 +22,33 @@ companyRouter.get(
     } catch (error) {
       // Retorna um erro 500 se houver algum problema na busca
       return sendErrorResponse(res, 500, `Internal Server Error: ${error}`);
+    }
+  }
+);
+
+companyRouter.get(
+  "/:company_cnpj",
+  async (req: Request, res: Response): Promise<Response> => {
+    try {
+      // Extrai o valor do parâmetro company_cnpj da URL da requisição
+      const cnpjFromURL = req.params.company_cnpj;
+
+      // Formata o CNPJ obtido da URL
+      const formattedCnpj = formatCnpj(cnpjFromURL);
+
+      // Busca a empresa no repositório com base no CNPJ formatado
+      const company = await CompanyRepository.getCompanyByCnpj(formattedCnpj);
+
+      // Se a empresa for encontrada, retorna a empresa com status HTTP 200 e em formato JSON
+      if (company) {
+        return res.status(200).json(company);
+      } else {
+        // Se a empresa não for encontrada, retorna uma resposta com status 404 (Not Found) e uma mensagem de erro
+        return res.status(404).json({ message: "Empresa não encontrada" });
+      }
+    } catch (error) {
+      // Em caso de erro, retorna uma resposta com status 500 (Internal Server Error) e detalhes do erro
+      return res.status(500).json(error);
     }
   }
 );

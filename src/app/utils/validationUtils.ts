@@ -71,10 +71,15 @@ export const isEmail = (value: string): boolean => {
  * Saída: "12.345.678/0001-90"
  */
 export const formatCnpj = (cnpj: string): string => {
+  // Certifique-se de que o CNPJ esteja no formato limpo (ex: 33343343333322)
   const cleanedCnpj = cnpj.replace(/[^0-9]/g, "");
 
   // Formate o CNPJ como "XX.XXX.XXX/XXXX-XX"
-  return `${cleanedCnpj.substring(0, 2)}.${cleanedCnpj.substring(2, 5)}
-  .${cleanedCnpj.substring(5, 8)}/${cleanedCnpj.substring(8, 12)}
-  -${cleanedCnpj.substring(12)}`;
+  return `${cleanedCnpj.substring(0, 2)}.${cleanedCnpj.substring(
+    2,
+    5
+  )}.${cleanedCnpj.substring(5, 8)}/${cleanedCnpj.substring(
+    8,
+    12
+  )}-${cleanedCnpj.substring(12)}`;
 };
